@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Kinerja Harian - SKP Pegawai</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
+
+        /* NAVBAR */
+        .navbar { background: linear-gradient(135deg, #1a5276, #2980b9); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 1000; }
+        .navbar h1 { font-size: 1.3em; }
+        .navbar .nav-links { display: flex; gap: 5px; flex-wrap: wrap; }
+        .navbar .nav-links button { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; transition: all 0.3s; }
+        .navbar .nav-links button:hover, .navbar .nav-links button.active { background: rgba(255,255,255,0.3); }
+
+        /* CONTAINER */
+        .container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* CARDS */
+        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card h2 { color: #1a5276; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #2980b9; font-size: 1.2em; }
+        .card h3 { color: #2c3e50; margin: 15px 0 10px; font-size: 1.05em; }
+
+        /* FORMS */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 0.9em; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 0.95em; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #2980b9; outline: none; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+
+        /* BUTTONS */
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background: #2980b9; color: white; }
+        .btn-primary:hover { background: #1a5276; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #1e8449; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-warning:hover { background: #d68910; }
+        .btn-info { background: #8e44ad; color: white; }
+        .btn-info:hover { background: #6c3483; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8em; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+
+        /* TABLE */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        table th { background: #1a5276; color: white; padding: 10px 8px; text-align: center; font-weight: 600; white-space: nowrap; }
+        table td { padding: 8px; border: 1px solid #ddd; text-align: center; vertical-align: middle; }
+        table tr:nth-child(even) { background: #f8f9fa; }
+        table tr:hover { background: #eaf2f8; }
+        .status-libur { background: #fdebd0 !important; color: #e67e22; }
+        .status-libur-akhir { background: #fadbd8 !important; color: #e74c3c; }
+        .status-kerja { background: #d5f5e3 !important; color: #27ae60; }
+        .status-belum { background: #fdebd0 !important; color: #e67e22; font-style: italic; }
+
+        /* CALENDAR */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 15px; }
+        .calendar-header { background: #1a5276; color: white; padding: 8px; text-align: center; font-weight: 600; font-size: 0.85em; border-radius: 4px; }
+        .calendar-day { padding: 8px; min-height: 70px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.8em; position: relative; cursor: pointer; transition: all 0.2s; }
+        .calendar-day:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .calendar-day .day-num { font-weight: 700; font-size: 1.1em; }
+        .calendar-day .day-status { font-size: 0.7em; margin-top: 3px; }
+        .calendar-day.libur { background: #fdebd0; border-color: #f39c12; }
+        .calendar-day.libur-akhir { background: #fadbd8; border-color: #e74c3c; }
+        .calendar-day.hari-kerja { background: #d5f5e3; border-color: #27ae60; }
+        .calendar-day.belum-diisi { background: #fdebd0; border-color: #e67e22; border-style: dashed; }
+        .calendar-day.sudah-diisi { background: #d4efdf; border-color: #27ae60; }
+        .calendar-day.empty { background: #f5f5f5; border-color: #eee; }
+
+        /* STATS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #2980b9; }
+        .stat-card .stat-num { font-size: 2em; font-weight: 700; color: #1a5276; }
+        .stat-card .stat-label { font-size: 0.85em; color: #777; margin-top: 5px; }
+        .stat-card.green { border-left-color: #27ae60; }
+        .stat-card.green .stat-num { color: #27ae60; }
+        .stat-card.orange { border-left-color: #f39c12; }
+        .stat-card.orange .stat-num { color: #f39c12; }
+        .stat-card.red { border-left-color: #e74c3c; }
+        .stat-card.red .stat-num { color: #e74c3c; }
+
+        /* MODAL */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .modal h2 { color: #1a5276; margin-bottom: 20px; }
+        .modal-close { float: right; background: none; border: none; font-size: 1.5em; cursor: pointer; color: #999; }
+
+        /* PRINT STYLES */
+        @media print {
+            body { background: white; }
+            .navbar, .no-print, .btn, .btn-group { display: none !important; }
+            .container { max-width: 100%; margin: 0; padding: 10px; }
+            .card { box-shadow: none; border: none; padding: 10px; }
+            .print-only { display: block !important; }
+            table { font-size: 0.75em; }
+            table th { background: #1a5276 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .status-libur { background: #fdebd0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+        .print-only { display: none; }
+
+        /* PRINT REPORT */
+        .print-report { font-family: 'Times New Roman', serif; }
+        .print-report .report-header { text-align: center; margin-bottom: 20px; }
+        .print-report .report-header h2 { font-size: 1.3em; border: none; color: black; }
+        .print-report .report-header h3 { font-size: 1.1em; color: black; }
+        .print-report .info-table { width: 100%; margin-bottom: 15px; }
+        .print-report .info-table td { border: none; padding: 3px 10px; text-align: left; font-size: 0.95em; }
+        .print-report .info-table td:first-child { width: 120px; font-weight: bold; }
+        .print-report table { border: 1px solid black; }
+        .print-report table th { background: #1a5276 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid black; }
+        .print-report table td { border: 1px solid black; padding: 5px; }
+        .print-report .signature-section { display: flex; justify-content: space-between; margin-top: 40px; }
+        .print-report .signature-box { text-align: center; width: 45%; }
+        .print-report .signature-box .sig-line { height: 60px; }
+
+        /* NOTIFICATION */
+        .notification { position: fixed; top: 80px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; font-weight: 600; z-index: 3000; animation: slideIn 0.3s ease; display: none; }
+        .notification.show { display: block; }
+        .notification.success { background: #27ae60; }
+        .notification.error { background: #e74c3c; }
+        .notification.info { background: #2980b9; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* HOLIDAY LIST */
+        .holiday-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #e74c3c; }
+        .holiday-item .holiday-date { font-weight: 600; color: #1a5276; }
+        .holiday-item .holiday-name { color: #555; }
+
+        /* TEMPLATE LIST */
+        .template-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #27ae60; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; gap: 10px; padding: 10px 15px; }
+            .navbar h1 { font-size: 1em; }
+            .form-row { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .calendar-grid { gap: 2px; }
+            .calendar-day { min-height: 50px; padding: 4px; font-size: 0.7em; }
+        }
+
+        .month-selector { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .month-selector select, .month-selector input { padding: 8px 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 0.95em; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 600; }
+        .badge-libur { background: #fdebd0; color: #e67e22; }
+        .badge-kerja { background: #d5f5e3; color: #27ae60; }
+        .badge-belum { background: #fadbd8; color: #e74c3c; }
+
+        .auto-fill-banner { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .auto-fill-banner .banner-text { font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<!-- NOTIFICATION -->
+<div class="notification" id="notification"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar no-print">
+    <h1>📋 Laporan Kinerja Harian - SKP Pegawai</h1>
+    <div class="nav-links">
+        <button onclick="showPage('dashboard')" class="active" id="nav-dashboard">📊 Dashboard</button>
+        <button onclick="showPage('daily')" id="nav-daily">📝 Input Harian</button>
+        <button onclick="showPage('recap')" id="nav-recap"> Rekap Bulanan</button>
+        <button onclick="showPage('report')" id="nav-report">🖨️ Cetak Laporan</button>
+        <button onclick="showPage('admin')" id="nav-admin">⚙️ Admin</button>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- ==================== DASHBOARD PAGE ==================== -->
+    <div class="page active" id="page-dashboard">
+        <div class="stats-grid" id="stats-grid"></div>
+
+        <div class="auto-fill-banner no-print" id="auto-fill-banner" style="display:none;">
+            <span class="banner-text" id="auto-fill-text">⚠️ Ada hari yang belum diisi!</span>
+            <button class="btn btn-warning" onclick="autoFillMissing()">🤖 Auto Fill Hari yang Belum Diisi</button>
+        </div>
+
+        <div class="card">
+            <h2>📅 Kalender Kinerja - <span id="dashboard-month-label"></span></h2>
+            <div class="month-selector no-print">
+                <select id="dash-month" onchange="renderDashboard()"></select>
+                <select id="dash-year" onchange="renderDashboard()"></select>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+            <div style="margin-top:15px; display:flex; gap:15px; flex-wrap:wrap; font-size:0.85em;">
+                <span><span style="display:inline-block;width:14px;height:14px;background:#d5f5e3;border:1px solid #27ae60;border-radius:3px;vertical-align:middle;"></span> Hari Kerja (Sudah Diisi)</span>
+                <span><span style="display:inline-block;width:14px;height:14px;background:#fdebd0;border:1px dashed #e67e22;border-radius:3px;vertical-align:middle;"></span> Hari Kerja (Belum Diisi)</span>
+                <span><span style="display:inline-block;width:14px;height:14px;background:#fadbd8;border:1px solid #e74c3c;border-radius:3px;vertical-align:middle;"></span> Libur Akhir Pekan</span>
+                <span><span style="display:inline-block;width:14px;height:14px;background:#fdebd0;border:1px solid #f39c12;border-radius:3px;vertical-align:middle;"></span> Libur Nasional</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Aktivitas Terbaru</h2>
+            <div class="table-wrapper">
+                <table id="recent-table">
+                    <thead><tr><th>No</th><th>Tanggal</th><th>Hari</th><th>Status</th><th>Kegiatan</th><th>Hasil</th><th>Jumlah</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== DAILY INPUT PAGE ==================== -->
+    <div class="page" id="page-daily">
+        <div class="card">
+            <h2>📝 Input Kegiatan Harian</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tanggal</label>
+                    <input type="date" id="daily-date" onchange="onDailyDateChange()">
+                </div>
+                <div class="form-group">
+                    <label>Hari</label>
+                    <input type="text" id="daily-hari" readonly style="background:#f5f5f5;">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <input type="text" id="daily-status" readonly style="background:#f5f5f5;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Uraian Pekerjaan / Kegiatan Tugas Jabatan</label>
+                <textarea id="daily-uraian" rows="3" placeholder="Masukkan uraian pekerjaan..."></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Hasil</label>
+                    <select id="daily-hasil">
+                        <option value="">-- Pilih --</option>
+                        <option value="Layanan">Layanan</option>
+                        <option value="Kegiatan">Kegiatan</option>
+                        <option value="Aplikasi">Aplikasi</option>
+                        <option value="Dokumen">Dokumen</option>
+                        <option value="0">0</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Jumlah</label>
+                    <input type="number" id="daily-jumlah" min="0" value="0">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Keterangan (opsional)</label>
+                <input type="text" id="daily-keterangan" placeholder="Keterangan tambahan...">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="saveDaily()">💾 Simpan</button>
+                <button class="btn btn-success" onclick="saveAndNext()">💾 Simpan & Hari Berikutnya</button>
+                <button class="btn btn-warning" onclick="clearDailyForm()">🗑️ Reset Form</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2> Data Bulan Ini</h2>
+            <div class="month-selector no-print">
+                <select id="daily-month" onchange="renderDailyTable()"></select>
+                <select id="daily-year" onchange="renderDailyTable()"></select>
+            </div>
+            <div class="table-wrapper">
+                <table id="daily-table">
+                    <thead><tr><th>No</th><th>Tanggal</th><th>Hari</th><th>Status</th><th>Uraian Pekerjaan</th><th>Hasil</th><th>Jumlah</th><th>Keterangan</th><th class="no-print">Aksi</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== RECAP PAGE ==================== -->
+    <div class="page" id="page-recap">
+        <div class="card">
+            <h2>📅 Rekap Bulanan</h2>
+            <div class="month-selector no-print">
+                <select id="recap-month" onchange="renderRecap()"></select>
+                <select id="recap-year" onchange="renderRecap()"></select>
+                <button class="btn btn-info" onclick="autoFillMissing()"> Auto Fill yang Belum</button>
+            </div>
+            <div class="stats-grid" id="recap-stats"></div>
+            <div class="table-wrapper">
+                <table id="recap-table">
+                    <thead><tr><th>No</th><th>Tanggal</th><th>Hari</th><th>Status</th><th>Uraian Pekerjaan</th><th>Hasil</th><th>Jumlah</th><th>Keterangan</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== REPORT PAGE ==================== -->
+    <div class="page" id="page-report">
+        <div class="card no-print">
+            <h2>️ Cetak Laporan Bulanan</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Bulan</label>
+                    <select id="report-month" onchange="generateReport()"></select>
+                </div>
+                <div class="form-group">
+                    <label>Tahun</label>
+                    <select id="report-year" onchange="generateReport()"></select>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="generateReport()"> Generate Laporan</button>
+                <button class="btn btn-success" onclick="window.print()">🖨️ Cetak / Print</button>
+            </div>
+        </div>
+
+        <div class="card print-report" id="print-report-area">
+            <div class="report-header">
+                <h2>LAPORAN KINERJA HARIAN</h2>
+                <h2>SASARAN KERJA PEGAWAI</h2>
+                <h3 id="report-instansi">MTsN 3 HULU SUNGAI UTARA</h3>
+            </div>
+            <table class="info-table">
+                <tr><td>NAMA</td><td>: <span id="report-nama">-</span></td></tr>
+                <tr><td>NIP</td><td>: <span id="report-nip">-</span></td></tr>
+                <tr><td>JABATAN</td><td>: <span id="report-jabatan">-</span></td></tr>
+                <tr><td>BULAN</td><td>: <span id="report-bulan">-</span></td></tr>
+            </table>
+            <div class="table-wrapper">
+                <table id="report-table">
+                    <thead><tr><th style="width:40px;">NO</th><th style="width:180px;">TANGGAL</th><th>KEGIATAN TUGAS JABATAN</th><th style="width:80px;">HASIL</th><th style="width:60px;">JUMLAH</th><th style="width:60px;">PARAF</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="signature-section">
+                <div class="signature-box">
+                    <p>Mengetahui,<br>Kepala TU <span id="report-instansi-sig">MTsN 3 HSU</span></p>
+                    <div class="sig-line"></div>
+                    <p><strong><span id="report-kepala-tu">-</span></strong><br>NIP.<span id="report-nip-ktu">-</span></p>
+                </div>
+                <div class="signature-box">
+                    <p id="report-tgl-ttd">Babirik, -</p>
+                    <p>Pegawai yang dinilai</p>
+                    <div class="sig-line"></div>
+                    <p><strong><span id="report-nama-sig">-</span></strong><br>NIP.<span id="report-nip-sig">-</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ADMIN PAGE ==================== -->
+    <div class="page" id="page-admin">
+        <div class="card">
+            <h2>👤 Data Pegawai</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" id="admin-nama" placeholder="Nama lengkap">
+                </div>
+                <div class="form-group">
+                    <label>NIP</label>
+                    <input type="text" id="admin-nip" placeholder="NIP">
+                </div>
+                <div class="form-group">
+                    <label>Jabatan</label>
+                    <input type="text" id="admin-jabatan" placeholder="Jabatan">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Instansi / Madrasah</label>
+                    <input type="text" id="admin-instansi" placeholder="Nama instansi">
+                </div>
+                <div class="form-group">
+                    <label>Kepala TU</label>
+                    <input type="text" id="admin-ktu" placeholder="Nama Kepala TU">
+                </div>
+                <div class="form-group">
+                    <label>NIP Kepala TU</label>
+                    <input type="text" id="admin-nip-ktu" placeholder="NIP Kepala TU">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Lokasi TTD (Kota)</label>
+                <input type="text" id="admin-kota" placeholder="Kota tempat TTD">
+            </div>
+            <button class="btn btn-primary" onclick="saveEmployee()">💾 Simpan Data Pegawai</button>
+        </div>
+
+        <div class="card">
+            <h2> Manajemen Hari Libur Nasional</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tanggal Libur</label>
+                    <input type="date" id="holiday-date">
+                </div>
+                <div class="form-group">
+                    <label>Nama Libur / Keterangan</label>
+                    <input type="text" id="holiday-name" placeholder="Contoh: Tahun Baru 2026">
+                </div>
+            </div>
+            <button class="btn btn-danger" onclick="addHoliday()">➕ Tambah Libur</button>
+            <div id="holiday-list" style="margin-top:15px;"></div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Template Kegiatan Harian (Auto Fill)</h2>
+            <p style="color:#777; font-size:0.9em; margin-bottom:15px;">Template ini akan digunakan untuk auto-fill hari kerja yang belum diisi. Pilih hari dan masukkan kegiatan default.</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Hari</label>
+                    <select id="template-hari">
+                        <option value="Senin">Senin</option>
+                        <option value="Selasa">Selasa</option>
+                        <option value="Rabu">Rabu</option>
+                        <option value="Kamis">Kamis</option>
+                        <option value="Jumat">Jumat</option>
+                        <option value="Sabtu">Sabtu</option>
+                        <option value="Minggu">Minggu</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Uraian Pekerjaan Default</label>
+                    <textarea id="template-uraian" rows="2" placeholder="Kegiatan default hari ini..."></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Hasil Default</label>
+                    <select id="template-hasil">
+                        <option value="Layanan">Layanan</option>
+                        <option value="Kegiatan">Kegiatan</option>
+                        <option value="Aplikasi">Aplikasi</option>
+                        <option value="Dokumen">Dokumen</option>
+                        <option value="0">0</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Jumlah Default</label>
+                    <input type="number" id="template-jumlah" min="0" value="1">
+                </div>
+            </div>
+            <button class="btn btn-success" onclick="saveTemplate()">💾 Simpan Template</button>
+            <div id="template-list" style="margin-top:15px;"></div>
+        </div>
+
+        <div class="card">
+            <h2>🔄 Pengaturan Auto Fill</h2>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="auto-fill-enabled" checked> Aktifkan Auto Fill untuk hari kerja yang belum diisi
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="auto-fill-weekend" checked> Tandai Sabtu/Minggu sebagai Libur Akhir Pekan
+                </label>
+            </div>
+            <button class="btn btn-primary" onclick="saveAutoFillSettings()">💾 Simpan Pengaturan</button>
+        </div>
+
+        <div class="card">
+            <h2> Backup & Restore Data</h2>
+            <div class="btn-group">
+                <button class="btn btn-info" onclick="exportData()">📤 Export Data (JSON)</button>
+                <button class="btn btn-warning" onclick="document.getElementById('import-file').click()">📥 Import Data</button>
+                <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+                <button class="btn btn-danger" onclick="clearAllData()">🗑️ Hapus Semua Data</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL: Quick Edit Daily -->
+<div class="modal-overlay" id="modal-quick-edit">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal('modal-quick-edit')">&times;</button>
+        <h2>✏️ Edit Kegiatan - <span id="modal-edit-date"></span></h2>
+        <div class="form-group">
+            <label>Uraian Pekerjaan</label>
+            <textarea id="modal-edit-uraian" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Hasil</label>
+                <select id="modal-edit-hasil">
+                    <option value="">-- Pilih --</option>
+                    <option value="Layanan">Layanan</option>
+                    <option value="Kegiatan">Kegiatan</option>
+                    <option value="Aplikasi">Aplikasi</option>
+                    <option value="Dokumen">Dokumen</option>
+                    <option value="0">0</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Jumlah</label>
+                <input type="number" id="modal-edit-jumlah" min="0">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Keterangan</label>
+            <input type="text" id="modal-edit-keterangan">
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="saveQuickEdit()"> Simpan</button>
+            <button class="btn btn-danger" onclick="deleteDailyEntry()">️ Hapus</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== DATA MANAGEMENT ====================
+const STORAGE_KEYS = {
+    employee: 'skp_employee',
+    holidays: 'skp_holidays',
+    dailyData: 'skp_daily_data',
+    templates: 'skp_templates',
+    settings: 'skp_settings'
+};
+
+function getData(key) {
+    try { return JSON.parse(localStorage.getItem(key)) || null; } catch { return null; }
+}
+function setData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+// Default data
+function getDefaultEmployee() {
+    return { nama: 'AGUST TOMMY', nip: '1990081120252110018', jabatan: 'PENATA LAYANAN OPERASIONAL', instansi: 'MTsN 3 HULU SUNGAI UTARA', ktu: 'SYAHRUNI, S.Pd.I', nipKtu: '197812052000031001', kota: 'Babirik' };
+}
+function getDefaultSettings() {
+    return { autoFillEnabled: true, autoFillWeekend: true };
+}
+function getDefaultTemplates() {
+    return {
+        'Senin': { uraian: 'Mengecek Absensi Simpatika', hasil: 'Layanan', jumlah: 1 },
+        'Selasa': { uraian: 'Mencetak absensi', hasil: 'Layanan', jumlah: 1 },
+        'Rabu': { uraian: 'Cetak SKAKPT', hasil: 'Dokumen', jumlah: 1 },
+        'Kamis': { uraian: 'Ampaharan TPG', hasil: 'Layanan', jumlah: 1 },
+        'Jumat': { uraian: 'Ampaharan TUKIN', hasil: 'Layanan', jumlah: 1 },
+        'Sabtu': { uraian: 'Libur Akhir Pekan', hasil: '0', jumlah: 0 },
+        'Minggu': { uraian: 'Libur Akhir Pekan', hasil: '0', jumlah: 0 }
+    };
+}
+
+// Initialize
+function init() {
+    if (!getData(STORAGE_KEYS.employee)) setData(STORAGE_KEYS.employee, getDefaultEmployee());
+    if (!getData(STORAGE_KEYS.holidays)) setData(STORAGE_KEYS.holidays, []);
+    if (!getData(STORAGE_KEYS.dailyData)) setData(STORAGE_KEYS.dailyData, {});
+    if (!getData(STORAGE_KEYS.templates)) setData(STORAGE_KEYS.templates, getDefaultTemplates());
+    if (!getData(STORAGE_KEYS.settings)) setData(STORAGE_KEYS.settings, getDefaultSettings());
+
+    populateMonthYearSelects();
+    loadEmployeeForm();
+    loadHolidayList();
+    loadTemplateList();
+    loadSettings();
+    renderDashboard();
+    renderDailyTable();
+    renderRecap();
+    generateReport();
+}
+
+// ==================== NAVIGATION ====================
+function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('nav-' + page).classList.add('active');
+
+    if (page === 'dashboard') renderDashboard();
+    if (page === 'daily') renderDailyTable();
+    if (page === 'recap') renderRecap();
+    if (page === 'report') generateReport();
+    if (page === 'admin') { loadHolidayList(); loadTemplateList(); }
+}
+
+// ==================== MONTH/YEAR SELECTS ====================
+const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const DAYS = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+function populateMonthYearSelects() {
+    const now = new Date();
+    const selects = ['dash-month','daily-month','recap-month','report-month'];
+    selects.forEach(id => {
+        const sel = document.getElementById(id);
+        sel.innerHTML = MONTHS.map((m, i) => `<option value="${i}" ${i === now.getMonth() ? 'selected' : ''}>${m}</option>`).join('');
+    });
+    const yearSelects = ['dash-year','daily-year','recap-year','report-year'];
+    yearSelects.forEach(id => {
+        const sel = document.getElementById(id);
+        let html = '';
+        for (let y = 2024; y <= 2030; y++) html += `<option value="${y}" ${y === now.getFullYear() ? 'selected' : ''}>${y}</option>`;
+        sel.innerHTML = html;
+    });
+}
+
+// ==================== UTILITY ====================
+function formatDate(dateStr) {
+    const d = new Date(dateStr);
+    return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+}
+function formatDateLong(dateStr) {
+    const d = new Date(dateStr);
+    return `${DAYS[d.getDay()]}, ${String(d.getDate()).padStart(2,'0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+function getDaysInMonth(year, month) { return new Date(year, month + 1, 0).getDate(); }
+function getDayName(dateStr) { return DAYS[new Date(dateStr).getDay()]; }
+
+function notify(msg, type = 'success') {
+    const n = document.getElementById('notification');
+    n.textContent = msg;
+    n.className = 'notification show ' + type;
+    setTimeout(() => n.classList.remove('show'), 3000);
+}
+
+// ==================== EMPLOYEE ====================
+function loadEmployeeForm() {
+    const emp = getData(STORAGE_KEYS.employee);
+    if (emp) {
+        document.getElementById('admin-nama').value = emp.nama || '';
+        document.getElementById('admin-nip').value = emp.nip || '';
+        document.getElementById('admin-jabatan').value = emp.jabatan || '';
+        document.getElementById('admin-instansi').value = emp.instansi || '';
+        document.getElementById('admin-ktu').value = emp.ktu || '';
+        document.getElementById('admin-nip-ktu').value = emp.nipKtu || '';
+        document.getElementById('admin-kota').value = emp.kota || '';
+    }
+}
+function saveEmployee() {
+    const emp = {
+        nama: document.getElementById('admin-nama').value,
+        nip: document.getElementById('admin-nip').value,
+        jabatan: document.getElementById('admin-jabatan').value,
+        instansi: document.getElementById('admin-instansi').value,
+        ktu: document.getElementById('admin-ktu').value,
+        nipKtu: document.getElementById('admin-nip-ktu').value,
+        kota: document.getElementById('admin-kota').value
+    };
+    setData(STORAGE_KEYS.employee, emp);
+    notify('Data pegawai berhasil disimpan!');
+    generateReport();
+}
+
+// ==================== HOLIDAYS ====================
+function addHoliday() {
+    const date = document.getElementById('holiday-date').value;
+    const name = document.getElementById('holiday-name').value;
+    if (!date || !name) { notify('Tanggal dan nama libur harus diisi!', 'error'); return; }
+    const holidays = getData(STORAGE_KEYS.holidays) || [];
+    if (holidays.find(h => h.date === date)) { notify('Tanggal libur sudah ada!', 'error'); return; }
+    holidays.push({ date, name });
+    holidays.sort((a, b) => a.date.localeCompare(b.date));
+    setData(STORAGE_KEYS.holidays, holidays);
+    document.getElementById('holiday-date').value = '';
+    document.getElementById('holiday-name').value = '';
+    loadHolidayList();
+    notify('Hari libur berhasil ditambahkan!');
+}
+function removeHoliday(date) {
+    let holidays = getData(STORAGE_KEYS.holidays) || [];
+    holidays = holidays.filter(h => h.date !== date);
+    setData(STORAGE_KEYS.holidays, holidays);
+    loadHolidayList();
+    notify('Hari libur dihapus!');
+}
+function loadHolidayList() {
+    const holidays = getData(STORAGE_KEYS.holidays) || [];
+    const container = document.getElementById('holiday-list');
+    if (holidays.length === 0) { container.innerHTML = '<p style="color:#999;">Belum ada hari libur yang ditambahkan.</p>'; return; }
+    container.innerHTML = holidays.map(h => `
+        <div class="holiday-item">
+            <div><span class="holiday-date">${formatDateLong(h.date)}</span> — <span class="holiday-name">${h.name}</span></div>
+            <button class="btn btn-danger btn-sm" onclick="removeHoliday('${h.date}')">Hapus</button>
+        </div>
+    `).join('');
+}
+
+// ==================== TEMPLATES ====================
+function saveTemplate() {
+    const hari = document.getElementById('template-hari').value;
+    const uraian = document.getElementById('template-uraian').value;
+    const hasil = document.getElementById('template-hasil').value;
+    const jumlah = parseInt(document.getElementById('template-jumlah').value) || 0;
+    if (!uraian) { notify('Uraian pekerjaan harus diisi!', 'error'); return; }
+    const templates = getData(STORAGE_KEYS.templates) || {};
+    templates[hari] = { uraian, hasil, jumlah };
+    setData(STORAGE_KEYS.templates, templates);
+    loadTemplateList();
+    notify(`Template untuk hari ${hari} berhasil disimpan!`);
+}
+function loadTemplateList() {
+    const templates = getData(STORAGE_KEYS.templates) || {};
+    const container = document.getElementById('template-list');
+    const days = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+    container.innerHTML = days.map(d => {
+        const t = templates[d];
+        if (!t) return `<div class="template-item" style="border-left-color:#999;"><span><strong>${d}:</strong> <em style="color:#999;">Belum ada template</em></span></div>`;
+        return `<div class="template-item"><span><strong>${d}:</strong> ${t.uraian} | Hasil: ${t.hasil} | Jumlah: ${t.jumlah}</span></div>`;
+    }).join('');
+}
+
+// ==================== SETTINGS ====================
+function loadSettings() {
+    const s = getData(STORAGE_KEYS.settings) || getDefaultSettings();
+    document.getElementById('auto-fill-enabled').checked = s.autoFillEnabled;
+    document.getElementById('auto-fill-weekend').checked = s.autoFillWeekend;
+}
+function saveAutoFillSettings() {
+    const s = {
+        autoFillEnabled: document.getElementById('auto-fill-enabled').checked,
+        autoFillWeekend: document.getElementById('auto-fill-weekend').checked
+    };
+    setData(STORAGE_KEYS.settings, s);
+    notify('Pengaturan auto fill disimpan!');
+}
+
+// ==================== DAY STATUS ====================
+function getDayStatus(dateStr) {
+    const holidays = getData(STORAGE_KEYS.holidays) || [];
+    const settings = getData(STORAGE_KEYS.settings) || getDefaultSettings();
+    const d = new Date(dateStr);
+    const dayOfWeek = d.getDay();
+
+    // Check national holiday
+    const holiday = holidays.find(h => h.date === dateStr);
+    if (holiday) return { status: 'Libur', label: holiday.name, type: 'libur' };
+
+    // Check weekend
+    if (settings.autoFillWeekend && (dayOfWeek === 0 || dayOfWeek === 6)) {
+        return { status: 'Libur Akhir Pekan', label: 'Sabtu/Minggu', type: 'libur-akhir' };
+    }
+
+    return { status: 'Hari Kerja', label: '', type: 'kerja' };
+}
+
+// ==================== DAILY DATA ====================
+function getDailyData(dateStr) {
+    const all = getData(STORAGE_KEYS.dailyData) || {};
+    return all[dateStr] || null;
+}
+function setDailyData(dateStr, data) {
+    const all = getData(STORAGE_KEYS.dailyData) || {};
+    all[dateStr] = data;
+    setData(STORAGE_KEYS.dailyData, all);
+}
+function removeDailyData(dateStr) {
+    const all = getData(STORAGE_KEYS.dailyData) || {};
+    delete all[dateStr];
+    setData(STORAGE_KEYS.dailyData, all);
+}
+
+// ==================== DAILY INPUT ====================
+function onDailyDateChange() {
+    const dateStr = document.getElementById('daily-date').value;
+    if (!dateStr) return;
+    const dayStatus = getDayStatus(dateStr);
+    document.getElementById('daily-hari').value = getDayName(dateStr);
+    document.getElementById('daily-status').value = dayStatus.status;
+
+    const existing = getDailyData(dateStr);
+    if (existing) {
+        document.getElementById('daily-uraian').value = existing.uraian || '';
+        document.getElementById('daily-hasil').value = existing.hasil || '';
+        document.getElementById('daily-jumlah').value = existing.jumlah || 0;
+        document.getElementById('daily-keterangan').value = existing.keterangan || '';
+    } else {
+        clearDailyForm(false);
+        // Auto suggest template
+        const templates = getData(STORAGE_KEYS.templates) || {};
+        const dayName = getDayName(dateStr);
+        const t = templates[dayName];
+        if (t && dayStatus.type === 'kerja') {
+            document.getElementById('daily-uraian').value = t.uraian;
+            document.getElementById('daily-hasil').value = t.hasil;
+            document.getElementById('daily-jumlah').value = t.jumlah;
+        }
+    }
+}
+function clearDailyForm(clearDate = true) {
+    if (clearDate) document.getElementById('daily-date').value = '';
+    document.getElementById('daily-hari').value = '';
+    document.getElementById('daily-status').value = '';
+    document.getElementById('daily-uraian').value = '';
+    document.getElementById('daily-hasil').value = '';
+    document.getElementById('daily-jumlah').value = 0;
+    document.getElementById('daily-keterangan').value = '';
+}
+function saveDaily() {
+    const dateStr = document.getElementById('daily-date').value;
+    if (!dateStr) { notify('Pilih tanggal terlebih dahulu!', 'error'); return; }
+    const dayStatus = getDayStatus(dateStr);
+    const data = {
+        tanggal: dateStr,
+        hari: getDayName(dateStr),
+        status: dayStatus.status,
+        uraian: document.getElementById('daily-uraian').value,
+        hasil: document.getElementById('daily-hasil').value,
+        jumlah: parseInt(document.getElementById('daily-jumlah').value) || 0,
+        keterangan: document.getElementById('daily-keterangan').value,
+        autoFilled: false
+    };
+    setDailyData(dateStr, data);
+    notify('Data harian berhasil disimpan!');
+    renderDailyTable();
+    renderDashboard();
+}
+function saveAndNext() {
+    saveDaily();
+    const dateStr = document.getElementById('daily-date').value;
+    if (dateStr) {
+        const next = new Date(dateStr);
+        next.setDate(next.getDate() + 1);
+        const nextStr = next.toISOString().split('T')[0];
+        document.getElementById('daily-date').value = nextStr;
+        onDailyDateChange();
+    }
+}
+
+// ==================== AUTO FILL ====================
+function autoFillMissing() {
+    const settings = getData(STORAGE_KEYS.settings) || getDefaultSettings();
+    if (!settings.autoFillEnabled) { notify('Auto fill tidak aktif! Aktifkan di pengaturan Admin.', 'error'); return; }
+
+    const month = parseInt(document.getElementById('dash-month').value);
+    const year = parseInt(document.getElementById('dash-year').value);
+    const daysInMonth = getDaysInMonth(year, month);
+    const templates = getData(STORAGE_KEYS.templates) || {};
+    let filled = 0;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const existing = getDailyData(dateStr);
+        if (existing) continue;
+
+        const dayStatus = getDayStatus(dateStr);
+        const dayName = getDayName(dateStr);
+
+        if (dayStatus.type === 'kerja') {
+            const t = templates[dayName];
+            const data = {
+                tanggal: dateStr,
+                hari: dayName,
+                status: dayStatus.status,
+                uraian: t ? t.uraian : 'Bekerja sesuai tugas jabatan',
+                hasil: t ? t.hasil : 'Kegiatan',
+                jumlah: t ? t.jumlah : 1,
+                keterangan: 'Auto-filled by system',
+                autoFilled: true
+            };
+            setDailyData(dateStr, data);
+            filled++;
+        } else if (dayStatus.type === 'libur-akhir') {
+            const data = {
+                tanggal: dateStr,
+                hari: dayName,
+                status: dayStatus.status,
+                uraian: dayStatus.label,
+                hasil: '0',
+                jumlah: 0,
+                keterangan: 'Auto-filled',
+                autoFilled: true
+            };
+            setDailyData(dateStr, data);
+            filled++;
+        } else if (dayStatus.type === 'libur') {
+            const data = {
+                tanggal: dateStr,
+                hari: dayName,
+                status: dayStatus.status,
+                uraian: dayStatus.label,
+                hasil: '0',
+                jumlah: 0,
+                keterangan: dayStatus.label,
+                autoFilled: true
+            };
+            setDailyData(dateStr, data);
+            filled++;
+        }
+    }
+
+    notify(`${filled} hari berhasil di-auto-fill!`, 'success');
+    renderDashboard();
+    renderDailyTable();
+    renderRecap();
+    generateReport();
+}
+
+// ==================== DASHBOARD ====================
+function renderDashboard() {
+    const month = parseInt(document.getElementById('dash-month').value);
+    const year = parseInt(document.getElementById('dash-year').value);
+    document.getElementById('dashboard-month-label').textContent = `${MONTHS[month]} ${year}`;
+
+    const daysInMonth = getDaysInMonth(year, month);
+    const allData = getData(STORAGE_KEYS.dailyData) || {};
+
+    // Stats
+    let kerjaCount = 0, liburCount = 0, liburAkhirCount = 0, belumCount = 0, sudahCount = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const ds = getDayStatus(dateStr);
+        const hasData = !!allData[dateStr];
+        if (ds.type === 'kerja') { kerjaCount++; if (hasData) sudahCount++; else belumCount++; }
+        else if (ds.type === 'libur') liburCount++;
+        else if (ds.type === 'libur-akhir') liburAkhirCount++;
+    }
+
+    document.getElementById('stats-grid').innerHTML = `
+        <div class="stat-card green"><div class="stat-num">${sudahCount}</div><div class="stat-label">Hari Kerja Diisi</div></div>
+        <div class="stat-card orange"><div class="stat-num">${belumCount}</div><div class="stat-label">Hari Kerja Belum Diisi</div></div>
+        <div class="stat-card"><div class="stat-num">${kerjaCount}</div><div class="stat-label">Total Hari Kerja</div></div>
+        <div class="stat-card red"><div class="stat-num">${liburCount + liburAkhirCount}</div><div class="stat-label">Total Hari Libur</div></div>
+    `;
+
+    // Auto fill banner
+    const banner = document.getElementById('auto-fill-banner');
+    if (belumCount > 0) {
+        banner.style.display = 'flex';
+        document.getElementById('auto-fill-text').textContent = `⚠️ Ada ${belumCount} hari kerja yang belum diisi!`;
+    } else {
+        banner.style.display = 'none';
+    }
+
+    // Calendar
+    const grid = document.getElementById('calendar-grid');
+    const dayHeaders = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+    let html = dayHeaders.map(d => `<div class="calendar-header">${d}</div>`).join('');
+
+    const firstDay = new Date(year, month, 1).getDay();
+    for (let i = 0; i < firstDay; i++) html += '<div class="calendar-day empty"></div>';
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const ds = getDayStatus(dateStr);
+        const hasData = !!allData[dateStr];
+        let cls = 'calendar-day';
+        if (ds.type === 'libur') cls += ' libur';
+        else if (ds.type === 'libur-akhir') cls += ' libur-akhir';
+        else if (hasData) cls += ' sudah-diisi';
+        else cls += ' belum-diisi';
+
+        const shortStatus = ds.type === 'kerja' ? (hasData ? '✅' : '️') : (ds.type === 'libur' ? '🔴' : '🟠');
+        html += `<div class="${cls}" onclick="quickEdit('${dateStr}')">
+            <div class="day-num">${d}</div>
+            <div class="day-status">${shortStatus} ${ds.status}</div>
+            ${ds.label && ds.type !== 'libur-akhir' ? `<div style="font-size:0.65em;color:#888;">${ds.label}</div>` : ''}
+        </div>`;
+    }
+    grid.innerHTML = html;
+
+    // Recent table
+    renderRecentTable(month, year);
+}
+
+function renderRecentTable(month, year) {
+    const daysInMonth = getDaysInMonth(year, month);
+    const allData = getData(STORAGE_KEYS.dailyData) || {};
+    const tbody = document.querySelector('#recent-table tbody');
+    let html = '';
+    let no = 1;
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const ds = getDayStatus(dateStr);
+        const data = allData[dateStr];
+        const statusCls = ds.type === 'libur' ? 'status-libur' : ds.type === 'libur-akhir' ? 'status-libur-akhir' : (data ? 'status-kerja' : 'status-belum');
+        html += `<tr class="${statusCls}">
+            <td>${no++}</td>
+            <td>${formatDate(dateStr)}</td>
+            <td>${getDayName(dateStr)}</td>
+            <td>${ds.status}${ds.label && ds.type !== 'libur-akhir' ? '<br><small>'+ds.label+'</small>' : ''}</td>
+            <td style="text-align:left;">${data ? data.uraian : '-'}</td>
+            <td>${data ? data.hasil : '-'}</td>
+            <td>${data ? data.jumlah : '-'}</td>
+        </tr>`;
+    }
+    tbody.innerHTML = html;
+}
+
+// ==================== QUICK EDIT MODAL ====================
+let currentEditDate = '';
+function quickEdit(dateStr) {
+    currentEditDate = dateStr;
+    const ds = getDayStatus(dateStr);
+    document.getElementById('modal-edit-date').textContent = formatDateLong(dateStr) + ' (' + ds.status + ')';
+
+    const existing = getDailyData(dateStr);
+    if (existing) {
+        document.getElementById('modal-edit-uraian').value = existing.uraian || '';
+        document.getElementById('modal-edit-hasil').value = existing.hasil || '';
+        document.getElementById('modal-edit-jumlah').value = existing.jumlah || 0;
+        document.getElementById('modal-edit-keterangan').value = existing.keterangan || '';
+    } else {
+        document.getElementById('modal-edit-uraian').value = '';
+        document.getElementById('modal-edit-hasil').value = '';
+        document.getElementById('modal-edit-jumlah').value = 0;
+        document.getElementById('modal-edit-keterangan').value = '';
+    }
+    document.getElementById('modal-quick-edit').classList.add('show');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function saveQuickEdit() {
+    const ds = getDayStatus(currentEditDate);
+    const data = {
+        tanggal: currentEditDate,
+        hari: getDayName(currentEditDate),
+        status: ds.status,
+        uraian: document.getElementById('modal-edit-uraian').value,
+        hasil: document.getElementById('modal-edit-hasil').value,
+        jumlah: parseInt(document.getElementById('modal-edit-jumlah').value) || 0,
+        keterangan: document.getElementById('modal-edit-keterangan').value,
+        autoFilled: false
+    };
+    setDailyData(currentEditDate, data);
+    closeModal('modal-quick-edit');
+    notify('Data berhasil diupdate!');
+    renderDashboard();
+    renderDailyTable();
+    renderRecap();
+    generateReport();
+}
+function deleteDailyEntry() {
+    if (confirm('Yakin hapus data ini?')) {
+        removeDailyData(currentEditDate);
+        closeModal('modal-quick-edit');
+        notify('Data dihapus!');
+        renderDashboard();
+        renderDailyTable();
+        renderRecap();
+        generateReport();
+    }
+}
+
+// ==================== DAILY TABLE ====================
+function renderDailyTable() {
+    const month = parseInt(document.getElementById('daily-month').value);
+    const year = parseInt(document.getElementById('daily-year').value);
+    const daysInMonth = getDaysInMonth(year, month);
+    const allData = getData(STORAGE_KEYS.dailyData) || {};
+    const tbody = document.querySelector('#daily-table tbody');
+    let html = '';
+    let no = 1;
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const ds = getDayStatus(dateStr);
+        const data = allData[dateStr];
+        const statusCls = ds.type === 'libur' ? 'status-libur' : ds.type === 'libur-akhir' ? 'status-libur-akhir' : (data ? 'status-kerja' : 'status-belum');
+        html += `<tr class="${statusCls}">
+            <td>${no++}</td>
+            <td>${formatDate(dateStr)}</td>
+            <td>${getDayName(dateStr)}</td>
+            <td>${ds.status}</td>
+            <td style="text-align:left;">${data ? data.uraian : (ds.type === 'kerja' ? '<em>Belum diisi</em>' : ds.label || '-')}</td>
+            <td>${data ? data.hasil : '-'}</td>
+            <td>${data ? data.jumlah : '-'}</td>
+            <td>${data ? (data.keterangan || '') : ''}</td>
+            <td class="no-print"><button class="btn btn-sm btn-primary" onclick="quickEdit('${dateStr}')">✏️</button></td>
+        </tr>`;
+    }
+    tbody.innerHTML = html;
+}
+
+// ==================== RECAP ====================
+function renderRecap() {
+    const month = parseInt(document.getElementById('recap-month').value);
+    const year = parseInt(document.getElementById('recap-year').value);
+    const daysInMonth = getDaysInMonth(year, month);
+    const allData = getData(STORAGE_KEYS.dailyData) || {};
+
+    let kerjaDiisi = 0, kerjaBelum = 0, liburNasional = 0, liburAkhir = 0, totalKegiatan = 0;
+    const tbody = document.querySelector('#recap-table tbody');
+    let html = '';
+    let no = 1;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const ds = getDayStatus(dateStr);
+        const data = allData[dateStr];
+        const statusCls = ds.type === 'libur' ? 'status-libur' : ds.type === 'libur-akhir' ? 'status-libur-akhir' : (data ? 'status-kerja' : 'status-belum');
+
+        if (ds.type === 'kerja') { if (data) { kerjaDiisi++; totalKegiatan += (data.jumlah || 0); } else kerjaBelum++; }
+        else if (ds.type === 'libur') liburNasional++;
+        else if (ds.type === 'libur-akhir') liburAkhir++;
+
+        html += `<tr class="${statusCls}">
+            <td>${no++}</td>
+            <td>${formatDate(dateStr)}</td>
+            <td>${getDayName(dateStr)}</td>
+            <td>${ds.status}</td>
+            <td style="text-align:left;">${data ? data.uraian : (ds.type === 'kerja' ? '<em>Belum diisi</em>' : ds.label || '-')}</td>
+            <td>${data ? data.hasil : '-'}</td>
+            <td>${data ? data.jumlah : '-'}</td>
+            <td>${data ? (data.keterangan || (ds.label && ds.type !== 'libur-akhir' ? ds.label : '')) : (ds.label && ds.type !== 'libur-akhir' ? ds.label : '')}</td>
+        </tr>`;
+    }
+    tbody.innerHTML = html;
+
+    document.getElementById('recap-stats').innerHTML = `
+        <div class="stat-card green"><div class="stat-num">${kerjaDiisi}</div><div class="stat-label">Hari Kerja Diisi</div></div>
+        <div class="stat-card orange"><div class="stat-num">${kerjaBelum}</div><div class="stat-label">Hari Kerja Belum Diisi</div></div>
+        <div class="stat-card"><div class="stat-num">${liburNasional}</div><div class="stat-label">Libur Nasional</div></div>
+        <div class="stat-card red"><div class="stat-num">${liburAkhir}</div><div class="stat-label">Libur Akhir Pekan</div></div>
+        <div class="stat-card green"><div class="stat-num">${totalKegiatan}</div><div class="stat-label">Total Kegiatan</div></div>
+    `;
+}
+
+// ==================== REPORT ====================
+function generateReport() {
+    const emp = getData(STORAGE_KEYS.employee) || getDefaultEmployee();
+    const month = parseInt(document.getElementById('report-month').value);
+    const year = parseInt(document.getElementById('report-year').value);
+    const daysInMonth = getDaysInMonth(year, month);
+    const allData = getData(STORAGE_KEYS.dailyData) || {};
+
+    document.getElementById('report-nama').textContent = emp.nama || '-';
+    document.getElementById('report-nip').textContent = emp.nip || '-';
+    document.getElementById('report-jabatan').textContent = emp.jabatan || '-';
+    document.getElementById('report-bulan').textContent = `${MONTHS[month]} ${year}`;
+    document.getElementById('report-instansi').textContent = emp.instansi || 'MTsN 3 HULU SUNGAI UTARA';
+    document.getElementById('report-instansi-sig').textContent = emp.instansi ? emp.instansi.replace('HULU SUNGAI UTARA', 'HSU') : 'MTsN 3 HSU';
+    document.getElementById('report-kepala-tu').textContent = emp.ktu || '-';
+    document.getElementById('report-nip-ktu').textContent = emp.nipKtu || '-';
+    document.getElementById('report-nama-sig').textContent = emp.nama || '-';
+    document.getElementById('report-nip-sig').textContent = emp.nip || '-';
+
+    const lastDay = new Date(year, month, daysInMonth);
+    document.getElementById('report-tgl-ttd').textContent = `${emp.kota || 'Babirik'}, ${String(lastDay.getDate()).padStart(2,'0')} ${MONTHS[month]} ${year}`;
+
+    const tbody = document.querySelector('#report-table tbody');
+    let html = '';
+    let no = 1;
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const ds = getDayStatus(dateStr);
+        const data = allData[dateStr];
+        const kegiatan = data ? data.uraian : (ds.type === 'kerja' ? '-' : ds.label || ds.status);
+        const hasil = data ? data.hasil : '0';
+        const jumlah = data ? data.jumlah : 0;
+
+        const rowStyle = ds.type === 'libur' ? 'background:#fdebd0;' : ds.type === 'libur-akhir' ? 'background:#fadbd8;' : '';
+        html += `<tr style="${rowStyle}">
+            <td>${no++}</td>
+            <td>${formatDateLong(dateStr)}</td>
+            <td style="text-align:left;">${kegiatan}</td>
+            <td>${hasil}</td>
+            <td>${jumlah}</td>
+            <td></td>
+        </tr>`;
+    }
+    tbody.innerHTML = html;
+}
+
+// ==================== BACKUP / RESTORE ====================
+function exportData() {
+    const data = {
+        employee: getData(STORAGE_KEYS.employee),
+        holidays: getData(STORAGE_KEYS.holidays),
+        dailyData: getData(STORAGE_KEYS.dailyData),
+        templates: getData(STORAGE_KEYS.templates),
+        settings: getData(STORAGE_KEYS.settings),
+        exportDate: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `skp_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    notify('Data berhasil di-export!');
+}
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (data.employee) setData(STORAGE_KEYS.employee, data.employee);
+            if (data.holidays) setData(STORAGE_KEYS.holidays, data.holidays);
+            if (data.dailyData) setData(STORAGE_KEYS.dailyData, data.dailyData);
+            if (data.templates) setData(STORAGE_KEYS.templates, data.templates);
+            if (data.settings) setData(STORAGE_KEYS.settings, data.settings);
+            loadEmployeeForm();
+            loadHolidayList();
+            loadTemplateList();
+            loadSettings();
+            renderDashboard();
+            renderDailyTable();
+            renderRecap();
+            generateReport();
+            notify('Data berhasil di-import!');
+        } catch (err) {
+            notify('Gagal import data: ' + err.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+function clearAllData() {
+    if (confirm('⚠️ Yakin hapus SEMUA data? Tindakan ini tidak bisa dibatalkan!')) {
+        if (confirm('Konfirmasi sekali lagi: Hapus semua data?')) {
+            Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+            init();
+            notify('Semua data telah dihapus!');
+        }
+    }
+}
+
+// ==================== INIT ====================
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
